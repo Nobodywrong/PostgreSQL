@@ -47,6 +47,9 @@ ls
 ```
 apt-get install odbc-postgresql
 ```
+```
+apt install unixodbc
+```
 
 Проверяем размещение файлов
 ``` 
