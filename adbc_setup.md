@@ -14,7 +14,7 @@ wget ftp://ftp.unixodbc.org/pub/unixODBC/unixODBC-'version'.tar.gz
 
 Распаковываем архив
 ```
-tar xvzf unixODBC-2.3.9.tar.gz
+tar xvzf unixODBC-'version'.tar.gz
 ```
 
 Переход в созданную папку
