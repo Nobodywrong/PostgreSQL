@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-Clear NEW DATABASE
+Clear OLD DATABASE
 """
 import psycopg2
 import datetime
@@ -47,7 +47,7 @@ def clear_func(
         port=port
     )
 
-    rows = conn.execute('select id_camera, min(time_mls), max(time_mls) from detector.objects group by id_camera').all()
+    rows = conn.execute('select id_camera, min(object_time), max(object_time) from detector.objects group by id_camera').all()
 
     if len(rows) > 0:
         sql_string = "delete from detector.objects where "
@@ -59,37 +59,61 @@ def clear_func(
             if (last_element-first_element) > month_mls:
                 if sql_string.endswith(")"):
                     sql_string += " or "
-                sql_string += f"(id_camera = {row[0]} and time_mls <= {last_element-month_mls})"
-
-        print(sql_string)
-
-        if not sql_string.endswith("where "):
-            sql_string += ";"
-            conn.execute(sql_string)
-
-    conn.commit()
-
-    print("Deletion successful")
-
-    rows = conn.execute('select id_camera, min(time_mls), max(time_mls) from detector.track group by id_camera').all()
-
-    if len(rows) > 0:
-        sql_string = "delete from detector.track where "
-        for row in rows:
-            print(row)
-            last_element = row[2]
-            first_element = row[1]
-            print(f"ID_CAMERA: {row[0]}; FIRST BBOX: {datetime.datetime.fromtimestamp(first_element/1000)}; LAST BBOX: {datetime.datetime.fromtimestamp(last_element/1000)}")
-            if (last_element-first_element) > month_mls:
-                if sql_string.endswith(")"):
-                    sql_string += " or "
-                sql_string += f"(id_camera = {row[0]} and time_mls <= {last_element-month_mls})"
+                sql_string += f"(id_camera = {row[0]} and object_time <= {last_element-month_mls})"
 
     print(sql_string)
 
     if not sql_string.endswith("where "):
         sql_string += ";"
         conn.execute(sql_string)
+
+    conn.commit()
+
+    print("Deletion successful")
+
+    rows = conn.execute('select id_camera, min(begin_time), max(begin_time) from detector.tracker group by id_camera').all()
+
+    if len(rows) > 0:
+        sql_string = "delete from detector.tracker where "
+        for row in rows:
+            last_element = row[2]
+            first_element = row[1]
+            print(f"ID_CAMERA: {row[0]}; FIRST BBOX: {datetime.datetime.fromtimestamp(first_element/1000)}; LAST BBOX: {datetime.datetime.fromtimestamp(last_element/1000)}")
+            if (last_element-first_element) > month_mls:
+                if sql_string.endswith(")"):
+                    sql_string += " or "
+                sql_string += f"(id_camera = {row[0]} and begin_time <= {last_element-month_mls})"
+
+    print(sql_string)
+
+    if not sql_string.endswith("where "):
+        sql_string += ";"
+        conn.execute(sql_string)
+
+    conn.commit()
+
+    print("Deletion successful")
+
+    rows = conn.execute('select to_timestamp((select min(object_time) from auto.car_objects)/1000), to_timestamp((select max(object_time) from auto.car_objects)/1000);').all()
+
+    if len(rows) > 0:
+        sql_string = "delete from auto.car_objects where "
+        for row in rows:
+            print(row)
+            last_element = row[2]
+            first_element = row[1]
+            print(f"ID_CAMERA: {row[0]}; FIRST BBOX: {datetime.datetime.fromtimestamp(first_element / 1000)}; LAST BBOX: {datetime.datetime.fromtimestamp(last_element / 1000)}")
+            if (last_element - first_element) > month_mls:
+                if sql_string.endswith(")"):
+                    sql_string += " or "
+                sql_string += f"(id_camera = {row[0]} and object_time <= {last_element - month_mls})"
+
+    print(sql_string)
+
+    if not sql_string.endswith("where "):
+        sql_string += ";"
+        conn.execute(sql_string)
+
 
     conn.commit()
 
